@@ -1,0 +1,31 @@
+server:
+  port: "8080"
+  mode: "debug"
+  read_timeout: 30
+  write_timeout: 30
+  max_header_bytes: 1048576
+
+database:
+  host: "127.0.0.1"
+  port: "3306"
+  user: "root"
+  password: "123456"
+  dbname: "go_job"
+  charset: "utf8mb4"
+  max_open_conns: 100
+  max_idle_conns: 20
+  conn_max_lifetime: 3600
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+  pool_size: 100
+
+log:
+  level: "debug"
+  filename: "logs/server/app.log"
+  max_size: 100
+  max_backups: 10
+  max_age: 30
+  compress: true

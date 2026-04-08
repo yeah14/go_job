@@ -1,0 +1,43 @@
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.cursor/
+
+# =========================
+# Go build artifacts
+# =========================
+bin/
+dist/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+*.coverprofile
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Environment / local config
+# =========================
+.env
+.env.*
+config/local.yaml
+config/*.local.yaml
+
+# =========================
+# Dependencies cache (optional)
+# =========================
+vendor/
