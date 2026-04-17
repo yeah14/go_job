@@ -12,10 +12,15 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "go-job/api/swagger"
+	"go-job/internal/app/handler"
+	"go-job/internal/app/middleware"
+	"go-job/internal/repository"
+	"go-job/internal/service"
 	conf "go-job/pkg/config"
 	"go-job/pkg/database"
 	"go-job/pkg/logger"
 	"go-job/pkg/response"
+	"go-job/pkg/timer"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -56,8 +61,9 @@ func main() {
 
 	gin.SetMode(cfg.Server.Mode)
 	r := gin.New()
-	r.Use(logger.GinLogger())
-	r.Use(gin.Recovery())
+	r.Use(middleware.CORS(middleware.DefaultCORSConfig()))
+	r.Use(middleware.RequestLogger())
+	r.Use(middleware.Recovery())
 
 	r.GET("/health", func(c *gin.Context) {
 		response.Success(c, gin.H{
@@ -67,6 +73,43 @@ func main() {
 		})
 	})
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Dependency wiring: repository -> service -> handler
+	db := database.MySQL()
+	redisClient := database.Redis()
+
+	jobRepo := repository.NewJobRepository(db)
+	executorRepo := repository.NewExecutorRepository(db)
+	logRepo := repository.NewLogRepository(db)
+
+	logService := service.NewLogService(logRepo)
+	triggerService := service.NewTriggerService(logService)
+
+	timeWheel, err := timer.NewTimeWheel(1*time.Second, 60)
+	if err != nil {
+		log.Fatal("create time wheel failed", zap.Error(err))
+	}
+	triggerCallback := service.NewTriggerCallbackFromService(triggerService, "scheduler-local", 0, nil)
+	scheduleService := service.NewScheduleServiceWithLock(jobRepo, timeWheel, triggerCallback, redisClient)
+
+	jobService := service.NewJobService(jobRepo, scheduleService)
+	executorService := service.NewExecutorService(executorRepo)
+
+	jobHandler := handler.NewJobHandler(jobService)
+	executorHandler := handler.NewExecutorHandler(executorService)
+	logHandler := handler.NewLogHandler(logService)
+	triggerHandler := handler.NewTriggerHandler(jobService, triggerService)
+
+	api := r.Group("/api/v1")
+	jobHandler.RegisterRoutes(api)
+	executorHandler.RegisterRoutes(api)
+	logHandler.RegisterRoutes(api)
+	triggerHandler.RegisterRoutes(api)
+
+	// Start scheduler after dependencies and routes are ready.
+	if err := scheduleService.Start(context.Background()); err != nil {
+		log.Fatal("start schedule service failed", zap.Error(err))
+	}
 
 	srv := &http.Server{
 		Addr:           ":" + cfg.Server.Port,
@@ -93,6 +136,9 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Error("server shutdown failed", zap.Error(err))
 		return
+	}
+	if err := scheduleService.Stop(); err != nil {
+		log.Error("schedule service stop failed", zap.Error(err))
 	}
 	log.Info("server stopped")
 }

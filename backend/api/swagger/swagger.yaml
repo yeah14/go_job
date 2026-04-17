@@ -1,0 +1,599 @@
+definitions:
+  handler.createExecutorRequest:
+    properties:
+      address_list:
+        type: string
+      address_type:
+        type: integer
+      app_name:
+        type: string
+      creator:
+        type: string
+      name:
+        type: string
+      status:
+        type: integer
+    required:
+    - app_name
+    - name
+    type: object
+  handler.createJobRequest:
+    properties:
+      creator:
+        type: string
+      cron:
+        type: string
+      executor_handler:
+        type: string
+      executor_id:
+        type: integer
+      executor_param:
+        type: string
+      job_name:
+        type: string
+      priority:
+        type: integer
+      retry_count:
+        type: integer
+      shard_param:
+        type: string
+      shard_total:
+        type: integer
+      status:
+        type: integer
+      timeout:
+        type: integer
+    required:
+    - cron
+    - executor_handler
+    - executor_id
+    - job_name
+    type: object
+  handler.triggerRequest:
+    properties:
+      executor_address:
+        type: string
+      shard_index:
+        type: integer
+    type: object
+  handler.updateStatusRequest:
+    properties:
+      status:
+        type: integer
+    required:
+    - status
+    type: object
+  response.Body:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/executor:
+    get:
+      description: 分页查询执行器列表，可按状态/关键字过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页条数
+        in: query
+        name: page_size
+        type: integer
+      - description: 执行器状态
+        in: query
+        name: status
+        type: integer
+      - description: 关键字（应用名/名称）
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询执行器列表
+      tags:
+      - Executor
+    post:
+      consumes:
+      - application/json
+      description: 创建一个执行器配置
+      parameters:
+      - description: 执行器创建参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createExecutorRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 创建执行器
+      tags:
+      - Executor
+  /api/v1/executor/{id}:
+    delete:
+      description: 根据执行器ID删除执行器
+      parameters:
+      - description: 执行器ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 删除执行器
+      tags:
+      - Executor
+    get:
+      description: 根据执行器ID查询执行器
+      parameters:
+      - description: 执行器ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询执行器详情
+      tags:
+      - Executor
+    put:
+      consumes:
+      - application/json
+      description: 根据执行器ID更新执行器
+      parameters:
+      - description: 执行器ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 执行器更新参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createExecutorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 更新执行器
+      tags:
+      - Executor
+  /api/v1/executor/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 启用或禁用执行器
+      parameters:
+      - description: 执行器ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            status:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 更新执行器状态
+      tags:
+      - Executor
+  /api/v1/job:
+    get:
+      description: 分页查询任务列表，可按执行器、状态、关键字过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页条数
+        in: query
+        name: page_size
+        type: integer
+      - description: 执行器ID
+        in: query
+        name: executor_id
+        type: integer
+      - description: 任务状态
+        in: query
+        name: status
+        type: integer
+      - description: 关键字（任务名/处理器）
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询任务列表
+      tags:
+      - Job
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的调度任务
+      parameters:
+      - description: 任务创建参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createJobRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 创建任务
+      tags:
+      - Job
+  /api/v1/job/{id}:
+    delete:
+      description: 根据任务ID删除任务
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 删除任务
+      tags:
+      - Job
+    get:
+      description: 根据任务ID查询任务
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询任务详情
+      tags:
+      - Job
+    put:
+      consumes:
+      - application/json
+      description: 根据任务ID更新任务配置
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 任务更新参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createJobRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 更新任务
+      tags:
+      - Job
+  /api/v1/job/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 启动或暂停任务
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态参数
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 更新任务状态
+      tags:
+      - Job
+  /api/v1/job/{id}/trigger:
+    post:
+      consumes:
+      - application/json
+      description: 立即触发一次任务执行，并返回生成的日志ID
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 触发参数
+        in: body
+        name: payload
+        schema:
+          $ref: '#/definitions/handler.triggerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 手动触发任务
+      tags:
+      - Trigger
+  /api/v1/job/log:
+    get:
+      description: 分页查询日志列表，可按任务ID/执行器ID/状态过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页条数
+        in: query
+        name: page_size
+        type: integer
+      - description: 任务ID
+        in: query
+        name: job_id
+        type: integer
+      - description: 执行器ID
+        in: query
+        name: executor_id
+        type: integer
+      - description: 日志状态
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询任务日志列表
+      tags:
+      - Log
+  /api/v1/job/log/{id}:
+    get:
+      description: 根据日志ID查询任务执行日志
+      parameters:
+      - description: 日志ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Body'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Body'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Body'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Body'
+      summary: 查询任务日志详情
+      tags:
+      - Log
+swagger: "2.0"
